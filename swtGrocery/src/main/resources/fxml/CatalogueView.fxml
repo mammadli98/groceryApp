@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" id="groceryCatalogueVBox" prefHeight="651.0" prefWidth="859.0"
+      xmlns="http://javafx.com/javafx/21" fx:controller="swtGrocery.javafx.controller.CatalogueViewController">
+    <Label id="groceryCatalogueLabel" alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308"
+           prefHeight="17.0" prefWidth="235.0" text="Grocery Catalogue" textAlignment="CENTER" textFill="#002fa7"
+           VBox.vgrow="ALWAYS">
+        <font>
+            <Font name="System Bold" size="18.0"/>
+        </font>
+    </Label>
+    <HBox maxWidth="1.7976931348623157E308" VBox.vgrow="SOMETIMES">
+        <TextField fx:id="searchingBar" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS"/>
+        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onMouseClicked="#searchInCatalogue"
+                text="Search" HBox.hgrow="ALWAYS"/>
+        <Button fx:id="endSearch" mnemonicParsing="false" onMouseClicked="#switchFromSearchResultToCatalogue" text="X"/>
+        <ComboBox fx:id="selectCategorytoFilter" maxWidth="1.7976931348623157E308" onAction="#findByCategorytoFilter"
+                  promptText="Select Category" HBox.hgrow="SOMETIMES">
+        </ComboBox>
+    </HBox>
+    <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308"
+           text="Double click to add to List" textAlignment="CENTER" VBox.vgrow="SOMETIMES"/>
+    <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+        <TableView fx:id="table" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onMouseClicked="#handleMouseClicked" HBox.hgrow="ALWAYS">
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+            </columnResizePolicy>
+        </TableView>
+    </HBox>
+    <Accordion>
+        <panes>
+            <TitledPane animated="false" text="Catalogue Management">
+                <content>
+                    <VBox prefHeight="101.0" prefWidth="857.0">
+                        <children>
+                            <HBox id="groceryCatalogueModifyHBox" maxWidth="1.7976931348623157E308" prefHeight="146.0"
+                                  prefWidth="837.0" VBox.vgrow="SOMETIMES">
+                                <TextField fx:id="addingField" alignment="CENTER" maxWidth="1.7976931348623157E308"
+                                           onMouseClicked="#setUnitSelectionInDropdown"
+                                           onMouseReleased="#setUnitSelectionInDropdown" promptText="Enter Item Name"
+                                           HBox.hgrow="SOMETIMES"/>
+                            </HBox>
+                            <HBox prefHeight="15.0" prefWidth="664.0" VBox.vgrow="SOMETIMES">
+                                <children>
+                                    <ComboBox fx:id="selectCategory" maxWidth="1.7976931348623157E308"
+                                              promptText="Select Category" HBox.hgrow="SOMETIMES"/>
+                                    <MenuButton fx:id="unitDropDownSelectionMenu" maxWidth="1.7976931348623157E308"
+                                                text="Select Unit" HBox.hgrow="SOMETIMES"/>
+                                </children>
+                            </HBox>
+                            <HBox VBox.vgrow="SOMETIMES">
+                                <Button contentDisplay="TEXT_ONLY" maxWidth="1.7976931348623157E308"
+                                        mnemonicParsing="false" onMouseClicked="#modifyEntry" text="Modify"
+                                        HBox.hgrow="SOMETIMES"/>
+                                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false"
+                                        onMouseClicked="#addItemToCV" text="Add " HBox.hgrow="SOMETIMES">
+                                </Button>
+                                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false"
+                                        onMouseClicked="#deleteEntry" text="Delete" HBox.hgrow="SOMETIMES"/>
+                            </HBox>
+                        </children>
+                    </VBox>
+                </content>
+            </TitledPane>
+        </panes>
+    </Accordion>
+</VBox>

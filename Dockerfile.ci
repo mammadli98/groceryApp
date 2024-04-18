@@ -1,0 +1,115 @@
+FROM node:10 as checkformat
+WORKDIR /app
+COPY ./swtGrocery/package.json /app/package.json
+COPY ./swtGrocery/package-lock.json /app/package-lock.json
+RUN npm install
+COPY ./swtGrocery/ /app
+ENTRYPOINT ["npm", "run", "ci-prettier-check"]
+
+FROM aldanial/cloc as cloc
+RUN apt-get update && apt-get install --yes --no-install-recommends jq curl cloc
+WORKDIR /app
+COPY ./swtGrocery /app/swtGrocery
+COPY ./.git/ /app
+
+FROM cloc as metric_loc_java
+ENV METRIC=LOC_JAVA
+WORKDIR /app
+ENTRYPOINT BRANCH=$(git branch | sed -n 's/^\* //p'); \
+HASH=$(git rev-parse --short HEAD); \
+VALUE=$(cloc ./swtGrocery --json | jq -r '.Java.code'); \
+ZEIT=$(git show -s --format=%ct ${HASH}); \
+curl --silent -0 -X POST ${APIENDPOINT} \
+-H "Expect:" \
+-H 'Content-Type: application/json; charset=utf-8' \
+--data "{ \
+    \"writeCode\": \"${WRITECODE}\", \
+    \"metric\": \"${METRIC}\", \
+    \"commitHash\": \"${HASH}\", \
+    \"branch\": \"${CI_COMMIT_BRANCH}\", \
+    \"value\": \"${VALUE}\", \
+    \"date\": \"${ZEIT}\", \
+    \"projectId\": ${PROJECTID} \
+}"
+
+FROM cloc as metric_loc_java_main
+ENV METRIC=LOC_JAVA_MAIN
+WORKDIR /app
+ENTRYPOINT BRANCH=$(git branch | sed -n 's/^\* //p'); \
+HASH=$(git rev-parse --short HEAD); \
+VALUE=$(cloc ./swtGrocery/src/main --json | jq -r '.Java.code'); \
+ZEIT=$(git show -s --format=%ct ${HASH}); \
+curl --silent -0 -X POST ${APIENDPOINT} \
+-H "Expect:" \
+-H 'Content-Type: application/json; charset=utf-8' \
+--data "{ \
+    \"writeCode\": \"${WRITECODE}\", \
+    \"metric\": \"${METRIC}\", \
+    \"commitHash\": \"${HASH}\", \
+    \"branch\": \"${CI_COMMIT_BRANCH}\", \
+    \"value\": \"${VALUE}\", \
+    \"date\": \"${ZEIT}\", \
+    \"projectId\": ${PROJECTID} \
+}"
+
+FROM cloc as metric_loc_java_test
+ENV METRIC=LOC_JAVA_TEST
+WORKDIR /app
+ENTRYPOINT BRANCH=$(git branch | sed -n 's/^\* //p'); \
+HASH=$(git rev-parse --short HEAD); \
+VALUE=$(cloc ./swtGrocery/src/test --json | jq -r '.Java.code'); \
+ZEIT=$(git show -s --format=%ct ${HASH}); \
+curl --silent -0 -X POST ${APIENDPOINT} \
+-H "Expect:" \
+-H 'Content-Type: application/json; charset=utf-8' \
+--data "{ \
+    \"writeCode\": \"${WRITECODE}\", \
+    \"metric\": \"${METRIC}\", \
+    \"commitHash\": \"${HASH}\", \
+    \"branch\": \"${CI_COMMIT_BRANCH}\", \
+    \"value\": \"${VALUE}\", \
+    \"date\": \"${ZEIT}\", \
+    \"projectId\": ${PROJECTID} \
+}"
+
+
+
+FROM openjdk:17-jdk-slim as compile
+WORKDIR /app
+COPY ./swtGrocery/gradle/ /app/gradle/
+COPY ./swtGrocery/build.gradle /app/build.gradle
+COPY ./swtGrocery/settings.gradle /app/settings.gradle
+COPY ./swtGrocery/gradlew /app/gradlew
+# cache gradle dependencies
+RUN chmod +x /app/gradlew
+RUN /app/gradlew build || return 0
+# build app without testing
+COPY ./swtGrocery/ /app
+RUN chmod +x /app/gradlew
+ENTRYPOINT ["./gradlew", "--no-daemon", "compileJava"] 
+
+FROM compile as testcoverage
+ENV METRIC=COV_JAVA
+WORKDIR /app
+# print coverage
+RUN apt-get update && apt-get install --yes --no-install-recommends git curl
+COPY ./.git/ /app
+# ENTRYPOINT ["./gradlew", "--no-daemon", "coverageReport"] 
+ENTRYPOINT ./gradlew --no-daemon coverageReport > log.txt; \
+BRANCH=$(git branch | sed -n 's/^\* //p'); \
+HASH=$(git rev-parse --short HEAD); \
+VALUE=$(grep -oP "Total \K([0-9]+)" log.txt); \
+# VALUE=$(cloc ./swtGrocery/src/test --json | jq -r '.Java.code'); \
+ZEIT=$(git show -s --format=%ct ${HASH}); \
+curl --silent -0 -X POST ${APIENDPOINT} \
+-H "Expect:" \
+-H 'Content-Type: application/json; charset=utf-8' \
+--data "{ \
+    \"writeCode\": \"${WRITECODE}\", \
+    \"metric\": \"${METRIC}\", \
+    \"commitHash\": \"${HASH}\", \
+    \"branch\": \"${CI_COMMIT_BRANCH}\", \
+    \"value\": \"${VALUE}\", \
+    \"date\": \"${ZEIT}\", \
+    \"projectId\": ${PROJECTID} \
+}"
